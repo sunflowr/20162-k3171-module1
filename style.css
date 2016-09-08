@@ -1,0 +1,34 @@
+html {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+body {
+  background-color: purple;
+  background: linear-gradient(purple, yellow);
+  color: white;
+  font-weight: bolder;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
+  font-size: 5em;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.hide: {
+  display: none;
+}
+.content {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+}
+
