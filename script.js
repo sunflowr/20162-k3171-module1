@@ -51,21 +51,16 @@ function onDocumentReady() {
     "lastSeen": 1473071247530,
   };
   writeMoreData(json);
-  //window.addEventListener('resize', resizeCanvas, false);
 
   // Get canvas and canvas context for drawing.
   canvas = $("#content");
   ctx = canvas.get(0).getContext("2d");
 
-  // stage = new Konva.Stage({
-  //   container: "content",   // id of container <div>
-  //   width: 500,
-  //   height: 500
-  // });
-  // layer = new Konva.Layer();
+  window.addEventListener('resize', resizeCanvas, false);
   resizeCanvas();
 }
 
+// Called when window resizes.
 function resizeCanvas() {
   var el = canvas.get(0);
 
@@ -90,6 +85,7 @@ function resizeCanvas() {
 }
 
 
+// Called when reading data.
 function readData()
 {
   var ref = firebase.database().ref('/btdevice/');
@@ -98,10 +94,14 @@ function readData()
   });
 }
 
+
+// Test function for writing a json object to firebase.
 function writeMoreData(data) {
   firebase.database().ref('btdevice').set(data);
 }
 
+
+// Test function for writing data to firebase.
 function writeUserData(userId, name, email, imageUrl) {
   firebase.database().ref('users/' + userId).set({
     username: name,
@@ -110,6 +110,8 @@ function writeUserData(userId, name, email, imageUrl) {
   });
 }
 
+
+// Draws the graphic.
 function redrawGraphic(firebaseSnapshot) {
   // Load background image.
   var imageObj = new Image();
@@ -139,6 +141,8 @@ function redrawGraphic(firebaseSnapshot) {
   imageObj.src = "14281307_10153674281422890_1252693633_n.png";  
 }
 
+
+// Draws a single bluetooth device.
 function drawBTDevice(data) {
   console.log(data);
 
@@ -146,17 +150,6 @@ function drawBTDevice(data) {
   var posY = 40;
   var size = data * 10;
 
-  // Draw circle.
-  // var circle = new Konva.Circle({
-  //   x: stage.getWidth() / 2,
-  //   y: stage.getHeight() / 2,
-  //   radius: 70,
-  //   fill: 'red',
-  //   stroke: 'black',
-  //   strokeWidth: 4
-  // });
-  // layer.add(circle);
-  // stage.add(layer);
   ctx.beginPath();
   ctx.arc(posX, posY, size, 0, 2 * Math.PI);
   ctx.fillStyle = "red";
