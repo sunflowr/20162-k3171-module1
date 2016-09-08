@@ -4,6 +4,11 @@ if (document.readyState != 'loading'){
   document.addEventListener('DOMContentLoaded', onDocumentReady);
 }
 
+var stage;
+var layer;
+var canvas;
+var ctx;
+
 // Page is loaded! Now event can be wired-up
 function onDocumentReady() {
   console.log('Document ready.');
@@ -46,8 +51,44 @@ function onDocumentReady() {
     "lastSeen": 1473071247530,
   };
   writeMoreData(json);
+  //window.addEventListener('resize', resizeCanvas, false);
+
+  // Get canvas and canvas context for drawing.
+  canvas = $("#content");
+  ctx = canvas.get(0).getContext("2d");
+
+  // stage = new Konva.Stage({
+  //   container: "content",   // id of container <div>
+  //   width: 500,
+  //   height: 500
+  // });
+  // layer = new Konva.Layer();
+  resizeCanvas();
+}
+
+function resizeCanvas() {
+  var el = canvas.get(0);
+
+  // For IE compatibility http://www.google.com/search?q=get+viewport+size+js
+  var viewportWidth = window.innerWidth;
+  var viewportHeight = window.innerHeight;
+
+  var canvasWidth = viewportWidth;
+  var canvasHeight = canvasHeight;
+  el.style.position = "fixed";
+  el.setAttribute("width", canvasWidth);
+  el.setAttribute("height", canvasHeight);
+  el.style.top = (viewportHeight - canvasHeight) / 2;
+  el.style.left = (viewportWidth - canvasWidth) / 2;
+
+  // Get canvas and canvas context for drawing.
+  // canvas.width = window.innerWidth;
+  // canvas.height = window.innerHeight;
+  // console.log(canvas.width);
+  // console.log(canvas.height);
   readData();
 }
+
 
 function readData()
 {
@@ -70,15 +111,6 @@ function writeUserData(userId, name, email, imageUrl) {
 }
 
 function redrawGraphic(firebaseSnapshot) {
-  var canvasW = $("body").width();
-  var canvasH = $("body").height();
-
-  // Get canvas and canvas context for drawing.
-  var canvas = $("#content");
-  canvas.width(canvasW);
-  canvas.height(canvasH);
-  var ctx = canvas.get(0).getContext("2d");
-
   // Load background image.
   var imageObj = new Image();
   imageObj.onload = function() {
@@ -89,7 +121,7 @@ function redrawGraphic(firebaseSnapshot) {
 
     // Image loaded, draw it.
     ctx.beginPath();
-    ctx.drawImage(this, 0, 0, $(canvas).width(), $(canvas).height());
+    ctx.drawImage(this, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Draw rest of graphic.
     if(firebaseSnapshot) {
@@ -101,20 +133,30 @@ function redrawGraphic(firebaseSnapshot) {
       });
 
       // Draw the bluetooth device.
-      drawBTDevice(ctx, size);
+      drawBTDevice(size);
     }
   };
   imageObj.src = "14281307_10153674281422890_1252693633_n.png";  
 }
 
-function drawBTDevice(ctx, data) {
+function drawBTDevice(data) {
   console.log(data);
 
-  var posX = 95;
-  var posY = 50;
+  var posX = 166;
+  var posY = 40;
   var size = data * 10;
 
   // Draw circle.
+  // var circle = new Konva.Circle({
+  //   x: stage.getWidth() / 2,
+  //   y: stage.getHeight() / 2,
+  //   radius: 70,
+  //   fill: 'red',
+  //   stroke: 'black',
+  //   strokeWidth: 4
+  // });
+  // layer.add(circle);
+  // stage.add(layer);
   ctx.beginPath();
   ctx.arc(posX, posY, size, 0, 2 * Math.PI);
   ctx.fillStyle = "red";
