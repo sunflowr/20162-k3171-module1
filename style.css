@@ -29,4 +29,22 @@ body {
   overflow: hidden;
   display: block;
 }
-
+.background {
+  background: url("radar.png") no-repeat center fixed;
+  background-size: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: block;
+}
+#circle {
+  width: 50px;
+  height: 50px;
+  -webkit-border-radius: 25px;
+  -moz-border-radius: 25px;
+  border-radius: 25px;
+  background: red;
+}
