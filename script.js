@@ -179,11 +179,14 @@ function redrawGraphic(firebaseSnapshot) {
   ctx.fillStyle = "red";
   ctx.fillRect(0, 0, $(canvas).width(), $(canvas).height());
 
+  // Reset transformation before drawing.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
   // Set scaling.
   ctx.scale(scaleH, scaleV);
 
-  // Draw background image.
   if(imgBackground) {
+    // Draw background image.
     ctx.drawImage(imgBackground, 0, 0);
   }
 
@@ -208,9 +211,12 @@ function redrawGraphic(firebaseSnapshot) {
 
 // Draws a single bluetooth device.
 function drawBTDevice(data) {
-  var posX = 166;
-  var posY = 50;
   var size = data * 10;
+  var posX = Math.floor(Math.random() * 350) + size;
+  var posY = Math.floor(Math.random() * 300) + size;
+
+  // Reset transformation before drawing.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   ctx.beginPath();
   ctx.translate(posX, posY);
@@ -228,6 +234,4 @@ function drawBTDevice(data) {
   ctx.arc(0, 0, size, 0, 2 * Math.PI);
   ctx.stroke();
   ctx.fill();
-
-  ctx.translate(0, 0);
 }
