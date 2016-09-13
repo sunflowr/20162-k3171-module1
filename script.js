@@ -15,41 +15,21 @@ function onDocumentReady() {
   console.log('Document ready.');
   
   // Write some test data to firebase.
-  writeUserData("Ture", "Gnol", "l@a.se", "http://mypics.se");
-  var json = {
-    "BTFound": {
-      "00:17:E9:D7:A1:8A": {
-        "BTDeviceType": "DEVICE_TYPE_DUAL",
-        "MACAddress": "00:17:E9:D7:A1:8A",
-        "friendlyName": "XXRBJ151800102",
-        "lastSeen": 1473071247530,
-        "rssi": 0,
-        "timesDiscovered": 1,
-        "type": "uncategorized"
-      },
-      "00:17:E9:D7:A0:8A": {
-        "BTDeviceType": "DEVICE_TYPE_DUAL",
-        "MACAddress": "00:17:E9:D7:A0:8A",
-        "friendlyName": "XXRBJ151800101",
-        "lastSeen": 1473071247530,
-        "rssi": 0,
-        "timesDiscovered": 3,
-        "type": "uncategorized"
-      },
-      "00:17:E9:D8:A3:8A": {
-        "BTDeviceType": "DEVICE_TYPE_DUAL",
-        "MACAddress": "00:17:E9:D8:A3:8A",
-        "friendlyName": "XXRBJ151800103",
-        "lastSeen": 1473071247530,
-        "rssi": 0,
-        "timesDiscovered": 1,
-        "type": "uncategorized"
-      }
-    },
-    "MACAddress": "00:17:E9:D/:A1:8A",
-    "friendlyName": "XXRBJ151800102",
-    "lastSeen": 1473071247530,
-  };
+  //writeUserData("Ture", "Gnol", "l@a.se", "http://mypics.se");
+  var json = {};
+  for(var numBTDev = 0; numBTDev < 5; ++numBTDev) {
+    var btDev = {
+      "BTFound": {},
+      "MACAddress": getRandomMACaddress(),
+      "friendlyName": getRandomName(),
+      "lastSeen": getUNIXTime()
+    };
+    for(var i = 0; i < (Math.floor(Math.random() * 5) + 1); i++) {
+      var dev = getNewFakeBTDevie();
+      btDev["BTFound"][dev["MACAddress"]] = dev;
+    }
+    json[btDev["MACAddress"]] = btDev;
+  }
   writeMoreData(json);
 
   // Get canvas and canvas context for drawing.
@@ -128,6 +108,56 @@ function writeUserData(userId, name, email, imageUrl) {
   });
 }
 
+// ------------------------------------------------
+// Collectin of functions for generating test data
+// ------------------------------------------------
+// Returns a random hex-value.
+function getRandomHexValue() {
+  var length = 2;
+  var chars = "0123456789ABCDEF";
+  var hex = "";
+  while(length--) hex += chars[(Math.random() * 16) | 0];
+  return hex;
+}
+
+// Returns a random MAC-address.
+function getRandomMACaddress() {
+  var mac = "";
+  mac += getRandomHexValue() + ":";
+  mac += getRandomHexValue() + ":";
+  mac += getRandomHexValue() + ":";
+  mac += getRandomHexValue() + ":";
+  mac += getRandomHexValue() + ":";
+  mac += getRandomHexValue();
+  return mac;
+}
+
+// Returns a random name.
+function getRandomName() {
+  return "XXRBJ151800103";
+}
+
+// Returns a random UNIX timestamp.
+function getUNIXTime() {
+  var unix = Math.round(+new Date()/1000);
+  return unix;
+}
+
+// Returna a fake found BT device.
+function getNewFakeBTDevie() {
+  var dev = {
+    "BTDeviceType": "DEVICE_TYPE_DUAL",
+    "MACAddress": getRandomMACaddress(),
+    "friendlyName": getRandomName(),
+    "lastSeen": getUNIXTime(),
+    "rssi": Math.floor(Math.random() * 100),
+    "timesDiscovered": Math.floor(Math.random() * 10),
+    "type": "uncategorized"
+  };
+  return dev;
+}
+// ------------------------------------------------
+
 
 // Initialize the graphic.
 function init() {
@@ -159,29 +189,45 @@ function redrawGraphic(firebaseSnapshot) {
 
   // Draw rest of graphic.
   if(firebaseSnapshot) {
-    var btfound = firebaseSnapshot.val()["BTFound"];
-    var size = 0;
-    Object.keys(btfound).forEach(function(key, index) {
-      size++;
-      //drawBTDevice(ctx, btfound[key]);
-    });
+    var btDevs = firebaseSnapshot.val();
+    Object.keys(btDevs).forEach(function(key, index) {
+      var btfound = btDevs[key]["BTFound"];
+      console.log(btDevs[key]["MACAddress"]);
+      var size = 0;
+      Object.keys(btfound).forEach(function(key, index) {
+        size++;
+        //drawBTDevice(ctx, btfound[key]);
+      });
 
-    // Draw the bluetooth device.
-    drawBTDevice(size);
+      // Draw the bluetooth device.
+      drawBTDevice(size);
+    });
   }
 }
 
 
 // Draws a single bluetooth device.
 function drawBTDevice(data) {
-  console.log(data);
-
   var posX = 166;
-  var posY = 40;
+  var posY = 50;
   var size = data * 10;
 
   ctx.beginPath();
-  ctx.arc(posX, posY, size, 0, 2 * Math.PI);
-  ctx.fillStyle = "red";
+  ctx.translate(posX, posY);
+
+  // Make a black outline.
+  ctx.strokeStyle = "#000000";
+
+  // Fill with gradient
+  var grd = ctx.createRadialGradient(size * 0.75, size * 0.75, size * 0.5, size * 0.20, size * 0.20, size * 2);
+  grd.addColorStop(0, "#ff0000");
+  grd.addColorStop(1, "#000000");
+  ctx.fillStyle = grd;
+
+  // Draw circle.
+  ctx.arc(0, 0, size, 0, 2 * Math.PI);
+  ctx.stroke();
   ctx.fill();
+
+  ctx.translate(0, 0);
 }
