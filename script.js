@@ -162,7 +162,7 @@ function getNewFakeBTDevie() {
 // Initialize the graphic.
 function init() {
   // Load background image.
-  imgBackground = loadImage("14281307_10153674281422890_1252693633_n.png", function() {
+  imgBackground = loadImage("backspace.png", function() {
     // Image loaded.
     console.log("image loaded");
 
