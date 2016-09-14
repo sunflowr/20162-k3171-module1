@@ -156,8 +156,14 @@ function populateDevices(firebaseSnapshot) {
       maxTimesDiscovered = 0;
 
       // Now add the found devices.
+      var numAdded = 0;
       var btfound = activeDev["BTFound"];
       Object.keys(btfound).forEach(function(key, index) {
+        if(numAdded > 10) {
+          return;
+        }
+        numAdded++;
+
         if(!(key in devices)) {
           // Define device.
           var device = {
@@ -192,6 +198,7 @@ function populateDevices(firebaseSnapshot) {
           maxTimesDiscovered = timesDiscovered;
         }
       });
+      devices[activeDevKey]["size"] = numAdded;
       console.log("maxRSSI: " + maxRSSI + ", maxSize: " + maxSize + " maxTimesDiscovered: " + maxTimesDiscovered);
     }
   }
@@ -199,9 +206,8 @@ function populateDevices(firebaseSnapshot) {
 
 // Animates the objects.
 function animateObj() {
-  console.log("animateObj");
-  var bgObj = $("#background");
-  var cObjs = $(".circle");
+  var bgObj = $("#background").get(0);
+  var cObjs = $(".circle").get();
   $("#background").animate({
     "z-index": "1"
   }, {
@@ -209,8 +215,10 @@ function animateObj() {
     progress: function(animation, progress, remainingMs) {
       var z = 100 + (100 * (17 * progress)); 
       var s = 1 + (5 * progress);
-      bgObj.css("background-size", "" + z + "% " + z + "%");
-      cObjs.css("transform", "scale(" + s + ", " + s + ")");
+      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
+      for(var i = 0; i < cObjs.length; i++) {
+        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
+      }
     }
   }).animate({
     "z-index": "10"
@@ -219,8 +227,10 @@ function animateObj() {
     progress: function(animation, progress, remainingMs) {
       var z = 100 + (100 * (17 * (1 - progress))); 
       var s = 1 + (5 * (1 - progress));
-      bgObj.css("background-size", "" + z + "% " + z + "%");
-      cObjs.css("transform", "scale(" + s + ", " + s + ")");
+      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
+      for(var i = 0; i < cObjs.length; i++) {
+        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
+      }
     },
     complete: animateObj
   });
@@ -228,10 +238,6 @@ function animateObj() {
 
 // Initialize the graphic.
 function init() {
-  $("#background").on("animationiteration webkitAnimationIteration", function(e) {
-    //zoom = (e.originalEvent.elapsedTime);
-    //draw();
-  });
 }
 
 
@@ -281,7 +287,6 @@ function draw() {
 
   // Start animation.
   if(Object.keys(devices).length > 0) {
-    console.log("start animation");
     $("#background").stop().finish();
     $(".circle").stop().finish();
     animateObj();
