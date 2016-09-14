@@ -4,17 +4,14 @@ if (document.readyState != 'loading'){
   document.addEventListener('DOMContentLoaded', onDocumentReady);
 }
 
-var canvas;
-var ctx;
 var scaleH; // Used for scaling graphics horizontally.
 var scaleV; // Used for scaling graphics vertically.
-var imgBackground; // Background image.
 var maxDistance = 100;
 
 // Positional scaling.
-var scaleBTH = 5;
-var scaleBTV = 5;
-var scaleBTS = 3;
+var scaleBTH = 3;
+var scaleBTV = 20;
+var scaleBTS = 10;
 
 // Set first element in device list as active.
 var activeDevIdx = 0;
@@ -50,9 +47,6 @@ function onDocumentReady() {
   });
   //writeMoreData(json);
 
-  // Get canvas and canvas context for drawing.
-  canvas = $("#content");
-
   // Init graphics.
   init();
 
@@ -64,22 +58,9 @@ function onDocumentReady() {
 
 // Called when window resizes.
 function resizeCanvas() {
-  var el = canvas.get(0);
-
   // For IE compatibility http://www.google.com/search?q=get+viewport+size+js
   var viewportWidth = window.innerWidth;
   var viewportHeight = window.innerHeight;
-
-  var canvasWidth = viewportWidth;
-  var canvasHeight = viewportHeight;
-  el.setAttribute("width", canvasWidth);
-  el.setAttribute("height", canvasHeight);
-  el.style.position = "fixed";
-  el.style.top = 0;
-  el.style.left = 0;
-  el.width = canvasWidth
-  el.height = canvasHeight;
-  ctx = el.getContext("2d");
 
   // Get scaling in proportion to background.
   scaleH = viewportWidth / 800;
@@ -87,15 +68,6 @@ function resizeCanvas() {
 
   // Reload data and redraw graphics.
   readData();
-}
-
-
-// Loads a image.
-function loadImage(url, callback) {
-  var imageObj = new Image();
-  imageObj.onload = callback || function() {};
-  imageObj.src = url;
-  return imageObj;
 }
 
 
@@ -130,45 +102,17 @@ function writeUserData(userId, name, email, imageUrl) {
 
 // Initialize the graphic.
 function init() {
-  // Load background image.
-  imgBackground = loadImage("radar.png", function() {
-    // Image loaded.
-    console.log("image loaded");
-
-    // Read firebase data and redraw graphic.
-    readData();
-  });
 }
 
 
 // Draws the graphic.
 function redrawGraphic(firebaseSnapshot) {
-  // Reset transformation before drawing.
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  // Clear background.
-  ctx.clearRect(0, 0, $(canvas).width(), $(canvas).height());
-
-  if(imgBackground) {
-    // Draw background image.
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    var ox = -(imgBackground.width / 2) * 0.25;
-    var oy = (imgBackground.height / 1) * 0.25;
-    ctx.scale(0.125, 0.125);
-    ctx.drawImage(imgBackground, ox, oy);
-    ctx.restore();
-  }
-
-  // Reset transformation before drawing.
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  // Set scaling.
-  ctx.scale(scaleH, scaleV);
+  // Clear the page from all previous device.
+  $("#background").empty();
 
   // Find center bottom position.
-  var posX = $(canvas).width() / 2;
-  var posY = $(canvas).height();
+  var posX = $("#background").width() / 2;
+  var posY = $("#background").height();
 
   // Draw rest of graphic.
   if(firebaseSnapshot) {
@@ -193,6 +137,7 @@ function redrawGraphic(firebaseSnapshot) {
 
       // Calculate center offset of device graphic.
       var offset = devices[activeDevKey]["size"] / 2; 
+      offset = -offset;
 
       // Set position and mark as drawable.
       devices[activeDevKey]["posX"] = posX + offset;
@@ -205,53 +150,36 @@ function redrawGraphic(firebaseSnapshot) {
       Object.keys(btfound).forEach(function(key, index) {
         // Calculate center offset of device graphic.
         offset = devices[key]["size"]; 
+        offset = -offset;
 
         // Add some randomization of position.
-        var s = Math.random();
+        var s = btfound[key]["timesDiscovered"] / 10;// Math.random();
 
         // Set position and mark as drawable.
-        devices[key]["posX"] = posX + offset + ((btfound[key]["rssi"] * s * scaleBTH) * (Math.random() < 0.5 ? -1 : 1));
+        var randomPosNeg = (s < 0.5 ? -1 : 1); // (Math.random() < 0.5 ? -1 : 1); 
+        devices[key]["posX"] = posX + offset + ((btfound[key]["rssi"] * s * scaleBTH) * randomPosNeg);
         devices[key]["posY"] = posY + offset - (btfound[key]["rssi"] * (1 - s) * scaleBTV);
         devices[key]["color"] = "#ff0000";
         devices[key]["draw"] = true;
       });
 
-      // Draw the bluetooth device.
+      // Add devices to page.
       Object.keys(devices).forEach(function(key, index) {
         var device = devices[key];
-        if(device["draw"]) {
-          drawBTDevice(device);
+        if(device.draw) {
+          var obj = $("<div></div>");
+          obj.attr("id", key);
+          obj.attr("class", "circle");
+          obj.css("left", device.posX);
+          obj.css("top", device.posY);
+          obj.width(device.size);
+          obj.height(device.size);
+          obj.css("background", device.color);
+          obj.css("background", "radial-gradient(ellipse at top left," + device.color + " 0%,#000000 100%)");
+          $("#background").append(obj);
         }
       });
     }
   }
 }
 
-
-// Draws a single bluetooth device.
-function drawBTDevice(device) {
-  var size = device.size;
-  var posX = device.posX;
-  var posY = device.posY;
-  var color = device.color;
-
-  // Reset transformation before drawing.
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  ctx.beginPath();
-  ctx.translate(posX, posY);
-
-  // Make a black outline.
-  ctx.strokeStyle = "#000000";
-
-  // Fill with gradient
-  var grd = ctx.createRadialGradient(size * 0.75, size * 0.75, size * 0.5, size * 0.20, size * 0.20, size * 2);
-  grd.addColorStop(0, color);
-  grd.addColorStop(1, "#000000");
-  ctx.fillStyle = grd;
-
-  // Draw circle.
-  ctx.arc(0, 0, size, 0, 2 * Math.PI);
-  ctx.stroke();
-  ctx.fill();
-}
