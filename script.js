@@ -197,6 +197,35 @@ function populateDevices(firebaseSnapshot) {
   }
 }
 
+// Animates the objects.
+function animateObj() {
+  console.log("animateObj");
+  var bgObj = $("#background");
+  var cObjs = $(".circle");
+  $("#background").animate({
+    "z-index": "1"
+  }, {
+    duration: 10000,
+    progress: function(animation, progress, remainingMs) {
+      var z = 100 + (100 * (17 * progress)); 
+      var s = 1 + (5 * progress);
+      bgObj.css("background-size", "" + z + "% " + z + "%");
+      cObjs.css("transform", "scale(" + s + ", " + s + ")");
+    }
+  }).animate({
+    "z-index": "10"
+  }, {
+    duration: 10000,
+    progress: function(animation, progress, remainingMs) {
+      var z = 100 + (100 * (17 * (1 - progress))); 
+      var s = 1 + (5 * (1 - progress));
+      bgObj.css("background-size", "" + z + "% " + z + "%");
+      cObjs.css("transform", "scale(" + s + ", " + s + ")");
+    },
+    complete: animateObj
+  });
+}
+
 // Initialize the graphic.
 function init() {
   $("#background").on("animationiteration webkitAnimationIteration", function(e) {
@@ -250,43 +279,12 @@ function draw() {
     }
   });
 
-  // Add animation.
-  function animate() {
-    var bgObj = $("#background");
-    var circleObjs = $(".circle");
-    $("#background").animate({
-      "z-index": "1"
-    }, {
-      "duration": 10000,
-      "progress": function(animation, progress, remainingMs) {
-        var z = 100 + (100 * (17 * progress)); 
-        var s = 1 + (5 * progress);
-        $("#background").css("background-size", "" + z + "% " + z + "%");
-        $(".circle").css("transform", "scale(" + s + ", " + s + ")");
-      }
-    }).animate({
-      "z-index": "10"
-    }, {
-      "duration": 10000,
-      "progress": function(animation, progress, remainingMs) {
-        var z = 100 + (100 * (17 * (1 - progress))); 
-        var s = 1 + (5 * (1 - progress));
-        $("#background").css("background-size", "" + z + "% " + z + "%");
-        $(".circle").css("transform", "scale(" + s + ", " + s + ")");
-      }
-    }, animate);
+  // Start animation.
+  if(Object.keys(devices).length > 0) {
+    console.log("start animation");
+    $("#background").stop().finish();
+    $(".circle").stop().finish();
+    animateObj();
   }
-  animate();
-  // function animate() {
-  //   var zoomLvl = 18;
-  //   $("#background").animate({
-  //     transform: "scale(18, 18)"
-  //     // backgroundSize: zoomFrom
-  //   }, 10000).animate({
-  //     transform: "scale(1, 1)"
-  //     // backgroundSize: zoomTo
-  //   }, 10000, animate);
-  // }
-  // animate();
 }
 
