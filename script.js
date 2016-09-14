@@ -124,11 +124,13 @@ function populateDevices(firebaseSnapshot) {
   if(firebaseSnapshot) {
     var btDevs = firebaseSnapshot.val();
     if(btDevs) {
+      var btDevKeys = Object.keys(btDevs);
+
       // Clear devices.
       devices = {};
 
       // Count number of found devices.
-      Object.keys(btDevs).forEach(function(key, index) {
+      btDevKeys.forEach(function(key, index) {
         // Define device.
         var device = {
           id: idFromMAC(key),
@@ -140,7 +142,7 @@ function populateDevices(firebaseSnapshot) {
       });
 
       // Get active device.
-      activeDevKey = Object.keys(btDevs)[activeDevIdx]; 
+      activeDevKey = btDevKeys[activeDevIdx]; 
       var activeDev = btDevs[activeDevKey];
 
       // Set position and mark as drawable.
