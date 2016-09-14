@@ -58,6 +58,12 @@ BTDevice = (function() {
     }
   };
 
+  // Get ID.
+  BTDevice.prototype.getID = function() {
+    var id = this["MACAddress"].replace(/:/gi, "");
+    return id;
+  }
+
   BTDevice.prototype.getDistanceTo = function(device) {
     if((device["MACAddress"] in this["BTFound"]))
     {
