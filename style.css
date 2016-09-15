@@ -13,8 +13,9 @@ body, html {
   height: 100%;
 }
 body {
-  background-color: purple;
-  background: linear-gradient(purple, yellow);
+  /* background-color: purple; */
+  /* background: linear-gradient(purple, yellow); */
+  background-color: #ffffff;
   color: white;
   font-weight: bolder;
   font-family: "Comic Sans MS", "Comic Sans", cursive;
@@ -38,9 +39,9 @@ body {
   }
 }
 .background {
-  background: url("space.png") no-repeat center center fixed;
+  background: url("radar.png") no-repeat center center fixed;
   /*background-size: cover;*/
-  background-size: 100% 100%;
+  background-size: 640% 640%;
   position: absolute;
   top: 0;
   left: 0;
@@ -53,6 +54,18 @@ body {
   /* animation-iteration-count: infinite; */
   /* animation-direction: alternate; */
   /* animation-timing-function: ease-in; */
+}
+.loading {
+  background: url("loading.gif") no-repeat center center fixed;
+  /*background-size: cover;*/
+  background-size: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: none;
 }
 .circle {
   position: absolute;

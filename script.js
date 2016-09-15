@@ -21,11 +21,18 @@ var activeDevIdx = 0;
 var activeDevKey; 
 var devices = {};
 
+var zoomMax = 5.4;
+var zoomFnc = zoomInAnim;
+var zoomProgress = 1;
+var zoomSpeed = 0.05;
+var bgObj;
+var cObjs;
+
 
 // Page is loaded! Now event can be wired-up
 function onDocumentReady() {
   console.log('Document ready.');
-  
+
   // Write some test data to firebase.
   //writeUserData("Ture", "Gnol", "l@a.se", "http://mypics.se");
   // Create devices.
@@ -61,6 +68,102 @@ function onDocumentReady() {
 
   // Load data.
   readData();
+
+  $(document).on("click touchstart", function() {
+    event.preventDefault();
+    zoomProgress = zoomFnc(zoomProgress);
+    if(zoomProgress > 1) {
+      zoomFnc = zoomOutAnim;
+      zoomProgress = 1;
+    }
+    if(zoomProgress < 0) {
+      zoomFnc = zoomInAnim;
+      zoomProgress = 0;
+    }
+  });
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function getColorComponents(rgb) {
+  return rgb.substring(4, rgb.length-1).replace(/ /g, '').split(',');
+}
+
+function zoomInAnim() {
+  $("#background").stop().finish();
+  $("#background").animate({
+    "z-index": "1"
+  }, {
+    duration: 10000,
+    progress: function(animation, progress, remainingMs) {
+      var z = 100 + (100 * (zoomMax * (1 - progress))); 
+      var s = 0.5 + (1 * (1 - progress));
+      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
+      for(var i = 0; i < cObjs.length; i++) {
+        var col = cObjs[i].style.color;
+        var c = getColorComponents(col);
+        var color = "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+        c[0] = Math.floor(c[0] * (1 - progress));
+        c[1] = Math.floor(c[1] * (1 - progress));
+        c[2] = Math.floor(c[2] * (1 - progress));
+        var rgb = "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+        var grad = "radial-gradient(ellipse at top left, " + color + " 0%, " + rgb + " 100%)"; 
+        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
+        $(cObjs[i]).css("background-image", grad);
+      }
+    }
+  });
+  return 1.1;
+}
+
+function zoomOutAnim() {
+  $("#background").stop().finish();
+  $("#background").animate({
+    "z-index": "10"
+  }, {
+    duration: 10000,
+    progress: function(animation, progress, remainingMs) {
+      var z = 100 + (100 * (zoomMax * progress)); 
+      var s = 0.5 + (1 * progress);
+      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
+      for(var i = 0; i < cObjs.length; i++) {
+        var col = cObjs[i].style.color;
+        var c = getColorComponents(col);
+        var color = "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+        c[0] = Math.floor(c[0] * (progress));
+        c[1] = Math.floor(c[1] * (progress));
+        c[2] = Math.floor(c[2] * (progress));
+        var rgb = "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+        var grad = "radial-gradient(ellipse at top left, " + color + " 0%, " + rgb + " 100%)"; 
+        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
+        $(cObjs[i]).css("background-image", grad);
+        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
+      }
+    }
+  });
+  return -0.1;
+}
+
+
+// Generate a circle.
+function generateCircle() {
+  var canvas = $("<canvas width=\"1000\" height=\"1000\"></canvas>");
+  $("body").append(canvas)
+  var ctx = canvas.get(0).getContext("2d");
+  ctx.beginPath();
+  var grd = ctx.createRadialGradient(500, 500, 500, 50, 50, 500);
+  grd.addColorStop(0, "#000000");
+  grd.addColorStop(1, "#ff0000");
+  ctx.fillStyle = grd;
+  ctx.arc(500, 500, 500, 0, 2 * Math.PI);
+  ctx.fill();
 }
 
 
@@ -70,12 +173,18 @@ function onDocumentReady() {
 // Called when reading data.
 function readData()
 {
+  // Show loading bar.
+  $("#loading").css("display", "block");
+
   // Read data from firebase.
   //var ref = firebase.database().ref('/btdevice/');
   var ref = firebase.database().ref();
   ref.once('value').then(function(snapshot) {
     // Data loaded from firebase, redraw graphic.
     populateDevices(snapshot);
+
+    // Show loading bar.
+    $("#loading").css("display", "none");
 
     // Draw graphic.
     draw();
@@ -121,6 +230,7 @@ function idFromMAC(mac) {
 
 
 function populateDevices(firebaseSnapshot) {
+  console.log("begin populate");
   if(firebaseSnapshot) {
     var btDevs = firebaseSnapshot.val();
     if(btDevs) {
@@ -148,7 +258,8 @@ function populateDevices(firebaseSnapshot) {
       // Set position and mark as drawable.
       devices[activeDevKey]["timesDiscovered"] = 0;
       devices[activeDevKey]["rssi"] = 0;
-      devices[activeDevKey]["color"] = "#00ff00";
+      //devices[activeDevKey]["color"] = "#00ff00";
+      devices[activeDevKey]["color"] = "#ff0000";
       devices[activeDevKey]["draw"] = true;
 
       // Reset values.
@@ -159,9 +270,10 @@ function populateDevices(firebaseSnapshot) {
 
       // Now add the found devices.
       var numAdded = 0;
+      var maxAdd = 100;
       var btfound = activeDev["BTFound"];
       Object.keys(btfound).forEach(function(key, index) {
-        if(numAdded > 10) {
+        if(numAdded > maxAdd) {
           return;
         }
         numAdded++;
@@ -206,37 +318,6 @@ function populateDevices(firebaseSnapshot) {
   }
 }
 
-// Animates the objects.
-function animateObj() {
-  var bgObj = $("#background").get(0);
-  var cObjs = $(".circle").get();
-  $("#background").animate({
-    "z-index": "1"
-  }, {
-    duration: 10000,
-    progress: function(animation, progress, remainingMs) {
-      var z = 100 + (100 * (17 * progress)); 
-      var s = 1 + (5 * progress);
-      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
-      for(var i = 0; i < cObjs.length; i++) {
-        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
-      }
-    }
-  }).animate({
-    "z-index": "10"
-  }, {
-    duration: 10000,
-    progress: function(animation, progress, remainingMs) {
-      var z = 100 + (100 * (17 * (1 - progress))); 
-      var s = 1 + (5 * (1 - progress));
-      bgObj.style.backgroundSize = "" + z + "% " + z + "%";
-      for(var i = 0; i < cObjs.length; i++) {
-        cObjs[i].style.transform =  "scale(" + s + ", " + s + ")";
-      }
-    },
-    complete: animateObj
-  });
-}
 
 // Initialize the graphic.
 function init() {
@@ -274,24 +355,27 @@ function draw() {
       obj.css("top", (posY - (sizeScaled / 2)) - rssiY);
       obj.width(sizeScaled);
       obj.height(sizeScaled);
+      obj.css("color", device.color);
       obj.css("background", device.color);
-      obj.css("background", "radial-gradient(ellipse at top left, " + device.color + " 0%,#000000 100%)");
+      // obj.css("background", "radial-gradient(ellipse at top left, " + device.color + " 0%,#000000 100%)");
       obj.appendTo("#background");
 
       // Add a click handler to device.
-      $(document).on("click", "#" + device.id, function() {
-        event.preventDefault();
-        // Do something when user clicks.
-        $(this).css("background", "radial-gradient(ellipse at top left, #0000ff 0%,#000000 100%)");
-      });
+      // $(document).on("click touchstart", "#" + device.id, function() {
+      //   event.preventDefault();
+      //   // Do something when user clicks.
+      //   $(this).css("background", "radial-gradient(ellipse at top left, #0000ff 0%,#000000 100%)");
+      // });
     }
   });
+
+  // Get zoomable objecs.
+  bgObj = $("#background").get(0);
+  cObjs = $(".circle").get();
 
   // Start animation.
   if(Object.keys(devices).length > 0) {
     $("#background").stop().finish();
-    $(".circle").stop().finish();
-    animateObj();
   }
 }
 
