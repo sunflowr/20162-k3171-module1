@@ -33,31 +33,11 @@ var cObjs;
 function onDocumentReady() {
   console.log('Document ready.');
 
-  // Write some test data to firebase.
-  //writeUserData("Ture", "Gnol", "l@a.se", "http://mypics.se");
-  // Create devices.
-  var devicesToAdd = {};
-  for(var numBTDev = 0; numBTDev < 10; ++numBTDev) {
-    var btDev = new BTDevice();
-    devicesToAdd[btDev["MACAddress"]] = btDev;
+  if(useFakeData) {
+    console.log("faking it...");
+    // Generate fake bt devices.
+    generateFakeBTDevices(50);
   }
-  var deviceKeys = Object.keys(devicesToAdd);
-  Object.keys(devicesToAdd).forEach(function(key, index) {
-    for(var i = 0; i < (Math.floor(Math.random() * (deviceKeys.length - 1)) + 1); i++) {
-      var addKey = deviceKeys[i];
-      if(key != addKey)
-      {
-        devicesToAdd[key].addDevice(devicesToAdd[addKey]);
-      }
-    }
-  });
-
-  // Write devices to firebase.
-  var json = {};
-  Object.keys(devicesToAdd).forEach(function(key, index) {
-    json[key] = devicesToAdd[key].serialize();
-  });
-  //writeMoreData(json);
 
   // Init graphics.
   init();
@@ -83,19 +63,40 @@ function onDocumentReady() {
   });
 }
 
-function hexToRgb(hex) {
-  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+function generateFakeBTDevices(numDevices) {
+  // Write some test data to firebase.
+  // Create devices.
+  var devicesToAdd = {};
+  for(var numBTDev = 0; numBTDev < numDevices; ++numBTDev) {
+    var btDev = new BTDevice();
+    devicesToAdd[btDev["MACAddress"]] = btDev;
+  }
+  var deviceKeys = Object.keys(devicesToAdd);
+  Object.keys(devicesToAdd).forEach(function(key, index) {
+    for(var i = 0; i < (Math.floor(Math.random() * (deviceKeys.length - 1)) + 1); i++) {
+      var addKey = deviceKeys[i];
+      if(key != addKey)
+      {
+        devicesToAdd[key].addDevice(devicesToAdd[addKey]);
+      }
+    }
+  });
+
+  // Write devices to firebase.
+  var json = {};
+  Object.keys(devicesToAdd).forEach(function(key, index) {
+    json[key] = devicesToAdd[key].serialize();
+  });
+  writeData(json);
 }
 
+// Returns the component of a rgb() string as an array.
 function getColorComponents(rgb) {
   return rgb.substring(4, rgb.length-1).replace(/ /g, '').split(',');
 }
 
+
+// Animates a zoom in of the objects.
 function zoomInAnim() {
   $("#background").stop().finish();
   $("#background").animate({
@@ -123,6 +124,8 @@ function zoomInAnim() {
   return 1.1;
 }
 
+
+// Animates a zoom out of the objects.
 function zoomOutAnim() {
   $("#background").stop().finish();
   $("#background").animate({
@@ -152,21 +155,6 @@ function zoomOutAnim() {
 }
 
 
-// Generate a circle.
-function generateCircle() {
-  var canvas = $("<canvas width=\"1000\" height=\"1000\"></canvas>");
-  $("body").append(canvas)
-  var ctx = canvas.get(0).getContext("2d");
-  ctx.beginPath();
-  var grd = ctx.createRadialGradient(500, 500, 500, 50, 50, 500);
-  grd.addColorStop(0, "#000000");
-  grd.addColorStop(1, "#ff0000");
-  ctx.fillStyle = grd;
-  ctx.arc(500, 500, 500, 0, 2 * Math.PI);
-  ctx.fill();
-}
-
-
 // ------------------------------------------------
 // Firebase stuff.
 // ------------------------------------------------
@@ -177,8 +165,7 @@ function readData()
   $("#loading").css("display", "block");
 
   // Read data from firebase.
-  //var ref = firebase.database().ref('/btdevice/');
-  var ref = firebase.database().ref();
+  var ref = firebase.database().ref("/");
   ref.once('value').then(function(snapshot) {
     // Data loaded from firebase, redraw graphic.
     populateDevices(snapshot);
@@ -193,20 +180,9 @@ function readData()
 
 
 // Test function for writing a json object to firebase.
-function writeMoreData(data) {
+function writeData(data) {
   // Write a chunk of json to firebase.
-  firebase.database().ref('btdevice').set(data);
-}
-
-
-// Test function for writing data to firebase.
-function writeUserData(userId, name, email, imageUrl) {
-  // Write some test data to firebase.
-  firebase.database().ref('users/' + userId).set({
-    username: name,
-    email: email,
-    profile_picture : imageUrl
-  });
+  firebase.database().ref("/").set(data);
 }
 // ------------------------------------------------
 
@@ -241,6 +217,10 @@ function populateDevices(firebaseSnapshot) {
 
       // Count number of found devices.
       btDevKeys.forEach(function(key, index) {
+        if(key == "btdevice"){
+          // Skip this - bad data.
+          return;
+        }
         // Define device.
         var device = {
           id: idFromMAC(key),
