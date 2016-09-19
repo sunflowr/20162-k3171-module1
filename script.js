@@ -335,6 +335,7 @@ function draw() {
       var obj = $("<div></div>");
       obj.attr("id", device.id);
       obj.attr("class", "circle");
+      obj.css("z-index", device.size);
       obj.css("left", (posX - (sizeScaled / 2)) + rssiX);
       obj.css("top", (posY - (sizeScaled / 2)) - rssiY);
       obj.width(sizeScaled);
