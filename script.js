@@ -224,8 +224,12 @@ function populateDevices(firebaseSnapshot) {
         // Define device.
         var device = {
           id: idFromMAC(key),
-          size: ((Object.keys(btDevs[key]["BTFound"]).length || 0) + 1)
+          size: 1
         };
+        if(btDevs[key]["BTFound"]) {
+          device.size = (Object.keys(btDevs[key]["BTFound"]).length || 0) + 1
+        }
+
 
         // Add to list.
         devices[key] = device;
